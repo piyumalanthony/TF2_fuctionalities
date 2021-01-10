@@ -1,20 +1,21 @@
 from siamese import train_images, train_labels, test_images, test_labels
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Flatten, Dense, Dropout, Conv2D, Softmax, Reshape, concatenate, MultiHeadAttention
+from tensorflow.keras.layers import Input, Flatten, Dense, Dropout, Conv2D, Softmax, Reshape, concatenate, Add
 from tensorflow.keras.optimizers import Adam
 import numpy as np
 from tensorflow.python.keras.utils.vis_utils import plot_model
 from keras.utils import np_utils
+from tensorflow.keras.callbacks import CSVLogger
 
 
 def intialize_cnn():
     input = Input(shape=(28, 28,), name="base_input")
     u = Reshape((28, 28, 1))(input)
-    x = Conv2D(filters=128, kernel_size=[8, 8], padding='valid', use_bias=True)(u)
-    x = Conv2D(filters=32, kernel_size=[4, 4], padding='valid', use_bias=True)(x)
-    y = Conv2D(filters=128, kernel_size=[8, 8], padding='valid', use_bias=True)(u)
-    y = Conv2D(filters=32, kernel_size=[4, 4], padding='valid', use_bias=True)(y)
-    x = concatenate([x, y])
+    x = Conv2D(filters=32, kernel_size=[4, 4], padding='valid', use_bias=True)(u)
+    x = Conv2D(filters=16, kernel_size=[3, 3], padding='valid', use_bias=True)(x)
+    y = Conv2D(filters=32, kernel_size=[4, 4], padding='valid', use_bias=True)(u)
+    y = Conv2D(filters=16, kernel_size=[3, 3], padding='valid', use_bias=True)(y)
+    x = Add()([x, y])
     x = Flatten()(x)
     x = Dense(128, activation="relu")(x)
     x = Dropout(0.1)(x)
@@ -33,5 +34,5 @@ model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accurac
 
 # plot_model(model, show_shapes=True, show_layer_names=True, to_file='CNN.png')
 # print(output.summary())
-history = model.fit(x=train_images, y=np_utils.to_categorical(train_labels), epochs=100, batch_size=128,
-                    validation_data=(test_images, np_utils.to_categorical(test_labels)))
+history = model.fit(x=train_images, y=np_utils.to_categorical(train_labels), epochs=5, batch_size=128,
+                    validation_data=(test_images, np_utils.to_categorical(test_labels)), callbacks=[CSVLogger("train.csv")])
